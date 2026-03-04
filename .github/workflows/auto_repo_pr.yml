@@ -83,7 +83,7 @@ jobs:
       # 4️⃣ Create PR and auto-merge external repo
       - name: Create and Auto Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ GH_TOKEN set here
+          GH_TOKEN: ${{ github.token }}  # ✅ GH_TOKEN set here
         run: |
           PR_URL=$(gh pr create \
             --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME \
