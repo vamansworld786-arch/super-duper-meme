@@ -11,7 +11,7 @@ jobs:
 
     steps:
       # ----------------------------
-      # 0️⃣ Set environment variables & prepare Git askpass
+      # 0️⃣ Set environment variables & Git askpass
       # ----------------------------
       - name: Set Variables & Git askpass
         run: |
@@ -23,10 +23,11 @@ jobs:
           export MY_TOKEN=${{ secrets.MY_TOKEN }}
           export COLLAB_TOKEN=${{ secrets.COLLAB_TOKEN }}
 
-          # Create Git askpass script for secure token auth
+          # Create Git askpass script for your repos
           echo "echo \$MY_TOKEN" > /tmp/git-askpass-my.sh
           chmod +x /tmp/git-askpass-my.sh
 
+          # Create Git askpass script for external repo
           echo "echo \$COLLAB_TOKEN" > /tmp/git-askpass-collab.sh
           chmod +x /tmp/git-askpass-collab.sh
 
