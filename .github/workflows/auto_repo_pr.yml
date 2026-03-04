@@ -10,32 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ----------------------------
+      # 0️⃣ Set environment variables
+      # ----------------------------
       - name: Set Variables
         run: |
-          echo "EXTERNAL_REPO_NAME="super-duper-meme" >> $GITHUB_ENV
-          echo "EXTERNAL_REPO_OWNER="vamansworld786-arch" >> $GITHUB_ENV  # Replace with actual owner username
+          echo "EXTERNAL_REPO_NAME=super-duper-meme" >> $GITHUB_ENV
+          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV   # Replace with actual owner username
+          export MY_TOKEN=${{ secrets.MY_TOKEN }}
+          export COLLAB_TOKEN=${{ secrets.COLLAB_TOKEN }}
 
       # ----------------------------
       # 1️⃣ Create and star 30 repos
       # ----------------------------
-      - name: Create and star 30 repositories
+      - name: Create and update 30 repositories
         run: |
           for i in $(seq 1 30); do
             REPO_NAME="repo-$(date +%s)-$i"
-            
+
             # Create repo on your account
             curl -X POST https://api.github.com/user/repos \
-              -H "Authorization: token ${{ secrets.MY_TOKEN }}" \
+              -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
 
             # Star the repo
             curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
-              -H "Authorization: token ${{ secrets.MY_TOKEN }}" \
+              -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json"
 
-            # Clone, commit, and push a file
-            git clone https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
+            # Clone, commit, and push update
+            git clone https://x-access-token:$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
             cd $REPO_NAME
             git checkout -b update-branch
             echo "Automated update $(date)" >> update.txt
@@ -43,10 +48,11 @@ jobs:
             git config user.email "deepikakarthik697@gmail.com"
             git add .
             git commit -m "Automated commit"
-            git remote set-url origin https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
+            git remote set-url origin https://x-access-token:$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
             git push origin update-branch
             cd ..
             rm -rf $REPO_NAME
+            sleep 2
           done
 
       # ----------------------------
@@ -54,7 +60,7 @@ jobs:
       # ----------------------------
       - name: Clone and update external repo
         run: |
-          git clone https://x-access-token:${{ secrets.COLLAB_TOKEN }}@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
+          git clone https://x-access-token:$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           cd $EXTERNAL_REPO_NAME
           git checkout -b update-branch
           echo "Automated update $(date)" >> update.txt
@@ -62,14 +68,17 @@ jobs:
           git config user.email "deepikakarthik697@gmail.com"
           git add .
           git commit -m "Automated update"
-          git remote set-url origin https://x-access-token:${{ secrets.COLLAB_TOKEN }}@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
+          git remote set-url origin https://x-access-token:$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           git push origin update-branch
 
+      # ----------------------------
+      # 3️⃣ Create PR and merge external repo
+      # ----------------------------
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
       - name: Authenticate GitHub CLI
-        run: echo "${{ secrets.COLLAB_TOKEN }}" | gh auth login --with-token
+        run: echo "$COLLAB_TOKEN" | gh auth login --with-token
 
       - name: Create Pull Request on External Repo
         run: |
