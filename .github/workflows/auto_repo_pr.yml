@@ -100,9 +100,9 @@ jobs:
 
       - name: Create and Auto Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}
+          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ Must be set for GitHub CLI in Actions
         run: |
-          # Create PR from your fork to original repo
+          # Create PR from fork to original repo
           PR_URL=$(gh pr create \
             --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME \
             --title "Automated PR" \
