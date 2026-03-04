@@ -13,23 +13,19 @@ jobs:
       # 0️⃣ Set variables & Git askpass scripts
       - name: Set Variables & Git askpass
         run: |
-          # External repo info
           echo "EXTERNAL_REPO_NAME=super-duper-meme" >> $GITHUB_ENV
-          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV  # Original repo owner
+          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV
 
-          # Export tokens
           export MY_TOKEN=${{ secrets.MY_TOKEN }}
           export COLLAB_TOKEN=${{ secrets.COLLAB_TOKEN }}
 
-          # Git askpass script for your repos
           echo "echo \$MY_TOKEN" > /tmp/git-askpass-my.sh
           chmod +x /tmp/git-askpass-my.sh
 
-          # Git askpass script for external repo
           echo "echo \$COLLAB_TOKEN" > /tmp/git-askpass-collab.sh
           chmod +x /tmp/git-askpass-collab.sh
 
-      # 1️⃣ Create and update 30 repos on your account
+      # 1️⃣ Create and update 30 repos
       - name: Create and update 30 repositories
         run: |
           export GIT_ASKPASS=/tmp/git-askpass-my.sh
@@ -37,27 +33,19 @@ jobs:
 
           for i in $(seq 1 30); do
             REPO_NAME="repo-$(date +%s)-$i"
-
-            # Create repo
             RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://api.github.com/user/repos \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}")
-
             if [ "$RESPONSE" != "201" ]; then
               echo "❌ Failed to create $REPO_NAME (HTTP $RESPONSE)"
               continue
             fi
-
-            # Wait for GitHub to propagate the repo
             sleep 3
-
-            # Star the repo
             curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json"
 
-            # Clone, commit, push
             git clone https://github.com/vamansworld786-arch/$REPO_NAME.git
             cd $REPO_NAME
             git config user.name "Dippp10"
@@ -72,22 +60,16 @@ jobs:
             sleep 2
           done
 
-      # 2️⃣ Fork, clone, update, push external repo
+      # 2️⃣ Fork and update external repo
       - name: Fork and update external repo
         run: |
           export GIT_ASKPASS=/tmp/git-askpass-collab.sh
           export GIT_TERMINAL_PROMPT=0
-
-          # Fork the repo (silent if already forked)
           gh repo fork $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME --clone=false --remote=false
-
-          # Clone your fork
           git clone https://github.com/${GITHUB_ACTOR}/$EXTERNAL_REPO_NAME.git
           cd $EXTERNAL_REPO_NAME
           git config user.name "Dippp10"
           git config user.email "deepikakarthik697@gmail.com"
-
-          # Create branch, commit, push
           git checkout -b update-branch
           echo "Automated update $(date)" >> update.txt
           git add .
@@ -101,9 +83,8 @@ jobs:
       # 4️⃣ Create PR and auto-merge external repo
       - name: Create and Auto Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ Set GH_TOKEN here
+          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ GH_TOKEN set here
         run: |
-          # Create PR from fork to original repo
           PR_URL=$(gh pr create \
             --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME \
             --title "Automated PR" \
@@ -113,6 +94,7 @@ jobs:
             --json url -q .url)
           echo "PR created at $PR_URL"
 
-          # Auto merge the PR
-          PR_NUMBER=$(gh pr view --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME --head ${GITHUB_ACTOR}:update-branch --json number -q .number)
+          PR_NUMBER=$(gh pr view --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME \
+            --head ${GITHUB_ACTOR}:update-branch \
+            --json number -q .number)
           gh pr merge $PR_NUMBER --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME --merge --admin --delete-branch
