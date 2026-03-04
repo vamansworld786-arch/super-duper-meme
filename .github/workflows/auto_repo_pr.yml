@@ -94,13 +94,14 @@ jobs:
           git commit -m "Automated update"
           git push https://$COLLAB_TOKEN@github.com/${GITHUB_ACTOR}/$EXTERNAL_REPO_NAME.git update-branch
 
-      # 3️⃣ Create PR and auto-merge to original external repo
+      # 3️⃣ Install GitHub CLI
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
+      # 4️⃣ Create PR and auto-merge external repo
       - name: Create and Auto Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ Must be set for GitHub CLI in Actions
+          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}   # ✅ Set GH_TOKEN here
         run: |
           # Create PR from fork to original repo
           PR_URL=$(gh pr create \
