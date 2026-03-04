@@ -1,8 +1,8 @@
-name: Create Repo Star and PR
+name: Create Repo, Star, Commit, PR, and Merge
 
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "0 */4 * * *"  # Runs every 4 hours
   workflow_dispatch:
 
 jobs:
@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Generate a unique repo name
       - name: Generate repo name
         run: echo "REPO_NAME=repo-$(date +%s)" >> $GITHUB_ENV
 
+      # 2️⃣ Create repository on collaborator account
       - name: Create repository on collaborator account
         run: |
           curl -X POST https://api.github.com/user/repos \
@@ -20,12 +22,14 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
 
+      # 3️⃣ Star the repo from your account
       - name: Star repository from your account
         run: |
           curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
           -H "Authorization: token ${{ secrets.MY_TOKEN }}" \
           -H "Accept: application/vnd.github+json"
 
+      # 4️⃣ Clone the repo using token
       - name: Clone repository
         run: |
           git clone https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
@@ -33,6 +37,7 @@ jobs:
           git checkout -b update-branch
           echo "Automated update $(date)" >> update.txt
 
+      # 5️⃣ Commit changes
       - name: Commit changes
         run: |
           cd $REPO_NAME
@@ -41,18 +46,22 @@ jobs:
           git add .
           git commit -m "Automated commit"
 
-      - name: Push branch with token
+      # 6️⃣ Push branch with token
+      - name: Push branch
         run: |
           cd $REPO_NAME
           git remote set-url origin https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
           git push origin update-branch
 
+      # 7️⃣ Install GitHub CLI
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
-      - name: Authenticate CLI with token
+      # 8️⃣ Authenticate CLI with your token
+      - name: Authenticate CLI
         run: echo "${{ secrets.MY_TOKEN }}" | gh auth login --with-token
 
+      # 9️⃣ Create Pull Request
       - name: Create Pull Request
         run: |
           gh pr create \
@@ -62,6 +71,7 @@ jobs:
           --base main \
           --head update-branch
 
-      - name: Merge PR
+      # 🔟 Merge PR
+      - name: Merge Pull Request
         run: |
           gh pr merge --repo vamansworld786-arch/$REPO_NAME --merge --admin --delete-branch
