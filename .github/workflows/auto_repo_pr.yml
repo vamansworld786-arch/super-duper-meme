@@ -2,7 +2,7 @@ name: Repo Automation + External PR
 
 on:
   schedule:
-    - cron: "0 */4 * * *"  # Runs every 4 hours
+    - cron: "0 */4 * * *"  # Every 4 hours
   workflow_dispatch:
 
 jobs:
@@ -10,30 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ----------------------------
-      # 0️⃣ Set environment variables & Git askpass
-      # ----------------------------
+      # 0️⃣ Set environment variables & Git askpass scripts
       - name: Set Variables & Git askpass
         run: |
           # External repo info
           echo "EXTERNAL_REPO_NAME=super-duper-meme" >> $GITHUB_ENV
-          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV  # Replace with actual owner username
+          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV  # Replace with actual owner
 
           # Export tokens
           export MY_TOKEN=${{ secrets.MY_TOKEN }}
           export COLLAB_TOKEN=${{ secrets.COLLAB_TOKEN }}
 
-          # Create Git askpass script for your repos
+          # Git askpass script for your repos
           echo "echo \$MY_TOKEN" > /tmp/git-askpass-my.sh
           chmod +x /tmp/git-askpass-my.sh
 
-          # Create Git askpass script for external repo
+          # Git askpass script for external repo
           echo "echo \$COLLAB_TOKEN" > /tmp/git-askpass-collab.sh
           chmod +x /tmp/git-askpass-collab.sh
 
-      # ----------------------------
       # 1️⃣ Create and update 30 repos on your account
-      # ----------------------------
       - name: Create and update 30 repositories
         run: |
           export GIT_ASKPASS=/tmp/git-askpass-my.sh
@@ -43,12 +39,20 @@ jobs:
             REPO_NAME="repo-$(date +%s)-$i"
 
             # Create repo
-            curl -X POST https://api.github.com/user/repos \
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://api.github.com/user/repos \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json" \
-              -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
+              -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}")
 
-            # Star repo
+            if [ "$RESPONSE" != "201" ]; then
+              echo "❌ Failed to create $REPO_NAME (HTTP $RESPONSE)"
+              continue
+            fi
+
+            # Wait for GitHub to propagate the repo
+            sleep 3
+
+            # Star the repo
             curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json"
@@ -68,9 +72,7 @@ jobs:
             sleep 2
           done
 
-      # ----------------------------
       # 2️⃣ Update external repo
-      # ----------------------------
       - name: Clone and update external repo
         run: |
           export GIT_ASKPASS=/tmp/git-askpass-collab.sh
@@ -86,9 +88,7 @@ jobs:
           git commit -m "Automated update"
           git push origin update-branch
 
-      # ----------------------------
       # 3️⃣ Create PR and merge external repo
-      # ----------------------------
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
