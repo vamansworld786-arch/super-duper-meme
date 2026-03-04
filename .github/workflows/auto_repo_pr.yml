@@ -13,14 +13,14 @@ jobs:
       - name: Generate repo name
         run: echo "REPO_NAME=repo-$(date +%s)" >> $GITHUB_ENV
 
-      - name: Create repository
+      - name: Create repository on collaborator account
         run: |
           curl -X POST https://api.github.com/user/repos \
           -H "Authorization: token ${{ secrets.COLLAB_TOKEN }}" \
           -H "Accept: application/vnd.github+json" \
           -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
 
-      - name: Star repository
+      - name: Star repository from your account
         run: |
           curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
           -H "Authorization: token ${{ secrets.MY_TOKEN }}" \
@@ -41,16 +41,17 @@ jobs:
           git add .
           git commit -m "Automated commit"
 
-      - name: Push branch
+      - name: Push branch with token
         run: |
           cd $REPO_NAME
+          git remote set-url origin https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
           git push origin update-branch
 
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
-      - name: Authenticate CLI
-        run: echo "${{ secrets.COLLAB_TOKEN }}" | gh auth login --with-token
+      - name: Authenticate CLI with token
+        run: echo "${{ secrets.MY_TOKEN }}" | gh auth login --with-token
 
       - name: Create Pull Request
         run: |
