@@ -28,27 +28,27 @@ jobs:
           for i in $(seq 1 30); do
             REPO_NAME="repo-$(date +%s)-$i"
 
-            # Create repo on your account
+            # Create repo
             curl -X POST https://api.github.com/user/repos \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
 
-            # Star the repo
+            # Star repo
             curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
               -H "Authorization: token $MY_TOKEN" \
               -H "Accept: application/vnd.github+json"
 
-            # Clone, commit, and push update
-            git clone https://x-access-token:$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
+            # Clone, commit, push
+            git clone https://$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
             cd $REPO_NAME
-            git checkout -b update-branch
-            echo "Automated update $(date)" >> update.txt
             git config user.name "Dippp10"
             git config user.email "deepikakarthik697@gmail.com"
+            git checkout -b update-branch
+            echo "Automated update $(date)" >> update.txt
             git add .
             git commit -m "Automated commit"
-            git remote set-url origin https://x-access-token:$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
+            git remote set-url origin https://$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
             git push origin update-branch
             cd ..
             rm -rf $REPO_NAME
@@ -60,7 +60,7 @@ jobs:
       # ----------------------------
       - name: Clone and update external repo
         run: |
-          git clone https://x-access-token:$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
+          git clone https://$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           cd $EXTERNAL_REPO_NAME
           git checkout -b update-branch
           echo "Automated update $(date)" >> update.txt
@@ -68,7 +68,7 @@ jobs:
           git config user.email "deepikakarthik697@gmail.com"
           git add .
           git commit -m "Automated update"
-          git remote set-url origin https://x-access-token:$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
+          git remote set-url origin https://$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           git push origin update-branch
 
       # ----------------------------
