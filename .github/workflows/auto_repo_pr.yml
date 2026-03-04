@@ -1,0 +1,66 @@
+name: Create Repo Star and PR
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+
+jobs:
+  automation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate repo name
+        run: echo "REPO_NAME=repo-$(date +%s)" >> $GITHUB_ENV
+
+      - name: Create repository
+        run: |
+          curl -X POST https://api.github.com/user/repos \
+          -H "Authorization: token ${{ secrets.COLLAB_TOKEN }}" \
+          -H "Accept: application/vnd.github+json" \
+          -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":true}"
+
+      - name: Star repository
+        run: |
+          curl -X PUT https://api.github.com/user/starred/vamansworld786-arch/$REPO_NAME \
+          -H "Authorization: token ${{ secrets.MY_TOKEN }}" \
+          -H "Accept: application/vnd.github+json"
+
+      - name: Clone repository
+        run: |
+          git clone https://x-access-token:${{ secrets.MY_TOKEN }}@github.com/vamansworld786-arch/$REPO_NAME.git
+          cd $REPO_NAME
+          git checkout -b update-branch
+          echo "Automated update $(date)" >> update.txt
+
+      - name: Commit changes
+        run: |
+          cd $REPO_NAME
+          git config user.name "Dippp10"
+          git config user.email "deepikakarthik697@gmail.com"
+          git add .
+          git commit -m "Automated commit"
+
+      - name: Push branch
+        run: |
+          cd $REPO_NAME
+          git push origin update-branch
+
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install gh -y
+
+      - name: Authenticate CLI
+        run: echo "${{ secrets.COLLAB_TOKEN }}" | gh auth login --with-token
+
+      - name: Create Pull Request
+        run: |
+          gh pr create \
+          --repo vamansworld786-arch/$REPO_NAME \
+          --title "Automated PR" \
+          --body "Auto generated PR" \
+          --base main \
+          --head update-branch
+
+      - name: Merge PR
+        run: |
+          gh pr merge --repo vamansworld786-arch/$REPO_NAME --merge --admin --delete-branch
