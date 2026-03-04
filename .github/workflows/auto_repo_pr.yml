@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Set Variables
         run: |
-          echo "EXTERNAL_REPO_NAME=super-duper-meme" >> $GITHUB_ENV
+          echo "EXTERNAL_REPO_NAME="super-duper-meme" >> $GITHUB_ENV
           echo "EXTERNAL_REPO_OWNER="vamansworld786-arch" >> $GITHUB_ENV  # Replace with actual owner username
 
       # ----------------------------
