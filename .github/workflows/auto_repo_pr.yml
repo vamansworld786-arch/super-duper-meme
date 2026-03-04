@@ -11,20 +11,33 @@ jobs:
 
     steps:
       # ----------------------------
-      # 0️⃣ Set environment variables
+      # 0️⃣ Set environment variables & prepare Git askpass
       # ----------------------------
-      - name: Set Variables
+      - name: Set Variables & Git askpass
         run: |
+          # External repo info
           echo "EXTERNAL_REPO_NAME=super-duper-meme" >> $GITHUB_ENV
-          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV   # Replace with actual owner username
+          echo "EXTERNAL_REPO_OWNER=vamansworld786-arch" >> $GITHUB_ENV  # Replace with actual owner username
+
+          # Export tokens
           export MY_TOKEN=${{ secrets.MY_TOKEN }}
           export COLLAB_TOKEN=${{ secrets.COLLAB_TOKEN }}
 
+          # Create Git askpass script for secure token auth
+          echo "echo \$MY_TOKEN" > /tmp/git-askpass-my.sh
+          chmod +x /tmp/git-askpass-my.sh
+
+          echo "echo \$COLLAB_TOKEN" > /tmp/git-askpass-collab.sh
+          chmod +x /tmp/git-askpass-collab.sh
+
       # ----------------------------
-      # 1️⃣ Create and star 30 repos
+      # 1️⃣ Create and update 30 repos on your account
       # ----------------------------
       - name: Create and update 30 repositories
         run: |
+          export GIT_ASKPASS=/tmp/git-askpass-my.sh
+          export GIT_TERMINAL_PROMPT=0
+
           for i in $(seq 1 30); do
             REPO_NAME="repo-$(date +%s)-$i"
 
@@ -40,7 +53,7 @@ jobs:
               -H "Accept: application/vnd.github+json"
 
             # Clone, commit, push
-            git clone https://$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
+            git clone https://github.com/vamansworld786-arch/$REPO_NAME.git
             cd $REPO_NAME
             git config user.name "Dippp10"
             git config user.email "deepikakarthik697@gmail.com"
@@ -48,7 +61,6 @@ jobs:
             echo "Automated update $(date)" >> update.txt
             git add .
             git commit -m "Automated commit"
-            git remote set-url origin https://$MY_TOKEN@github.com/vamansworld786-arch/$REPO_NAME.git
             git push origin update-branch
             cd ..
             rm -rf $REPO_NAME
@@ -60,15 +72,17 @@ jobs:
       # ----------------------------
       - name: Clone and update external repo
         run: |
-          git clone https://$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
+          export GIT_ASKPASS=/tmp/git-askpass-collab.sh
+          export GIT_TERMINAL_PROMPT=0
+
+          git clone https://github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           cd $EXTERNAL_REPO_NAME
-          git checkout -b update-branch
-          echo "Automated update $(date)" >> update.txt
           git config user.name "Dippp10"
           git config user.email "deepikakarthik697@gmail.com"
+          git checkout -b update-branch
+          echo "Automated update $(date)" >> update.txt
           git add .
           git commit -m "Automated update"
-          git remote set-url origin https://$COLLAB_TOKEN@github.com/$EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME.git
           git push origin update-branch
 
       # ----------------------------
