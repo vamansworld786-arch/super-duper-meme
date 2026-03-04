@@ -98,11 +98,11 @@ jobs:
       - name: Install GitHub CLI
         run: sudo apt-get update && sudo apt-get install gh -y
 
-      - name: Authenticate GitHub CLI
-        run: echo "$COLLAB_TOKEN" | gh auth login --with-token
-
-      - name: Create Pull Request on Original External Repo
+      - name: Create and Auto Merge Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.COLLAB_TOKEN }}
         run: |
+          # Create PR from your fork to original repo
           PR_URL=$(gh pr create \
             --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME \
             --title "Automated PR" \
@@ -112,7 +112,6 @@ jobs:
             --json url -q .url)
           echo "PR created at $PR_URL"
 
-      - name: Auto Merge Pull Request
-        run: |
+          # Auto merge the PR
           PR_NUMBER=$(gh pr view --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME --head ${GITHUB_ACTOR}:update-branch --json number -q .number)
           gh pr merge $PR_NUMBER --repo $EXTERNAL_REPO_OWNER/$EXTERNAL_REPO_NAME --merge --admin --delete-branch
